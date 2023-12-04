@@ -74,48 +74,9 @@ func SolvePart2(input string) string {
 		}
 	}
 
-	for i, card := range cards {
-		splitCount := 29
-		mod := i % splitCount
-
-		if mod == 0 {
-			output += fmt.Sprintf("\n<bg=%s> </>", getColor(highestCount, card.count))
-		} else {
-			output += fmt.Sprintf("<bg=%s> </>", getColor(highestCount, card.count))
-		}
-
-	}
-
 	output += fmt.Sprintf("\nTotal cards: <blue>%d</>, Highest card: <blue>%d</> with <blue>%d</> copies", totalCards, highestCard, highestCount)
 
 	return output
-}
-
-func getColor(max, current int) string {
-	minimum := 0
-	normalized := normalize(float64(minimum), float64(max), float64(current))
-
-	red, green, blue := 0.0, 0.0, 0.0
-
-	if normalized < 0.0015 {
-		normalized = normalize(0, 0.001, normalized)
-		blue = math.Floor(normalized * 255)
-	} else if normalized < 0.3 {
-		normalized = normalize(0, 0.3, normalized)
-		green = math.Floor(normalized * 255)
-	} else {
-		normalized = normalize(0, 1, normalized)
-		red = math.Floor(normalized * 255)
-	}
-
-	result := fmt.Sprintf("%d,%d,%d", int(red), int(green), int(blue))
-
-	return result
-
-}
-
-func normalize(min, max, value float64) float64 {
-	return (float64(value) - float64(min)) / (float64(max) - float64(min))
 }
 
 func addCards(cards []card, card card) []card {
