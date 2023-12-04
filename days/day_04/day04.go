@@ -30,20 +30,19 @@ func (c card) Count() string {
 func SolvePart1(input string) string {
 	cards := parseInput(input)
 	output := ""
-	totalPoints := 0.0
-	totalMatches := 0
+	totalPoints, totalMatches := 0, 0
 
 	cards = checkMatches(cards)
 
 	for _, card := range cards {
 		if card.matches > 0 {
 			points := 1 * math.Pow(2, float64(card.matches-1))
-			totalPoints += points
+			totalPoints += int(points)
 			totalMatches++
 		}
 	}
 
-	output += fmt.Sprintf("Total points: <blue>%f</>, Total matches: <blue>%d</>", totalPoints, totalMatches)
+	output += fmt.Sprintf("Total points: <blue>%d</>, Total matches: <blue>%d</>", totalPoints, totalMatches)
 
 	return output
 }
@@ -51,20 +50,21 @@ func SolvePart1(input string) string {
 func SolvePart2(input string) string {
 	cards := parseInput(input)
 	output := ""
-	totalCards := 0
+	totalCards, highestCount, highestCard := 0, 0, 0
 
 	cards = checkMatches(cards)
 
+	// run once for each card
 	for i := 0; i < len(cards); i++ {
 		card := cards[i]
-		for j := 0; j < card.count; j++ {
-			if card.matches > 0 {
+		// add copies of the subsequent cards for
+		// each copy of the current card
+		if card.matches > 0 && card.count > 0 {
+			for j := 0; j < card.count; j++ {
 				cards = addCards(cards, card)
 			}
 		}
 	}
-
-	highestCount, highestCard := 0, 0
 
 	for _, card := range cards {
 		totalCards += card.count
@@ -97,7 +97,6 @@ func checkMatches(cards []card) []card {
 			}
 		}
 	}
-
 	return cards
 }
 
