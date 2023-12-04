@@ -15,18 +15,6 @@ type card struct {
 	matches        int
 }
 
-func (c card) Id() string {
-	return strconv.Itoa(c.id)
-}
-
-func (c card) Matches() string {
-	return strconv.Itoa(c.matches)
-}
-
-func (c card) Count() string {
-	return strconv.Itoa(c.count)
-}
-
 func SolvePart1(input string) string {
 	cards := parseInput(input)
 	output := ""
@@ -105,29 +93,34 @@ func parseInput(input string) []card {
 	var cards []card
 
 	for _, line := range lines {
-		cardParts := strings.Split(line, ":")
-		cardStringID := strings.Split(cardParts[0], " ")
-		cardID, _ := strconv.Atoi(cardStringID[len(cardStringID)-1])
-
-		cardParts = strings.Split(cardParts[1], "|")
-		myNumbers := parseNumbers(cardParts[0])
-		winningNumbers := parseNumbers(cardParts[1])
-
-		cards = append(cards, card{
-			id:             cardID,
-			count:          1,
-			myNumbers:      myNumbers,
-			winningNumbers: winningNumbers,
-			matches:        0,
-		})
-
+		if line == "" {
+			continue
+		}
+		cards = append(cards, parseCard(line))
 	}
 	return cards
 }
 
+func parseCard(input string) card {
+	cardParts := strings.Split(input, ":")
+	cardStringID := strings.Split(cardParts[0], " ")
+	cardID, _ := strconv.Atoi(cardStringID[len(cardStringID)-1])
+
+	cardParts = strings.Split(cardParts[1], "|")
+	myNumbers := parseNumbers(cardParts[0])
+	winningNumbers := parseNumbers(cardParts[1])
+
+	return card{
+		id:             cardID,
+		count:          1,
+		myNumbers:      myNumbers,
+		winningNumbers: winningNumbers,
+		matches:        0,
+	}
+}
+
 func parseNumbers(input string) []int {
 	var numbers []int
-
 	for _, number := range strings.Split(input, " ") {
 		if number == "" {
 			continue
@@ -135,6 +128,5 @@ func parseNumbers(input string) []int {
 		numberInt, _ := strconv.Atoi(number)
 		numbers = append(numbers, numberInt)
 	}
-
 	return numbers
 }
