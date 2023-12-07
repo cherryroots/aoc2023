@@ -11,12 +11,13 @@ import (
 	day2 "aoc/days/day_02"
 	day3 "aoc/days/day_03"
 	day4 "aoc/days/day_04"
+	day5 "aoc/days/day_05"
 )
 
 func main() {
 	start := time.Now()
 
-	result, err := RunSolution(4)
+	result, err := RunSolution(5)
 	if err != nil {
 		fmt.Println(err)
 		os.Exit(1)
@@ -48,6 +49,12 @@ func RunSolution(day int) (string, error) {
 		// Implement the solution for Day 4 here.
 		solutionPart1 := day4.SolvePart1(day4.Input)
 		solutionPart2 := day4.SolvePart2(day4.Input)
+		solution := fmt.Sprintf("Part 1:\n\n%s\n\nPart 2:\n%s\n", solutionPart1, solutionPart2)
+		return solution, nil
+	case 5:
+		// Implement the solution for Day 5 here.
+		solutionPart1 := day5.SolvePart1(day5.Input)
+		solutionPart2 := day5.SolvePart2(day5.ExampleInput)
 		solution := fmt.Sprintf("Part 1:\n\n%s\n\nPart 2:\n%s\n", solutionPart1, solutionPart2)
 		return solution, nil
 	// Add cases for other days here...

@@ -42,11 +42,8 @@ func SolvePart2(input string) string {
 
 	cards = checkMatches(cards)
 
-	// run once for each card
 	for i := 0; i < len(cards); i++ {
 		card := cards[i]
-		// add copies of the subsequent cards for
-		// each copy of the current card
 		if card.matches > 0 && card.count > 0 {
 			for j := 0; j < card.count; j++ {
 				cards = addCards(cards, card)
