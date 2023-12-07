@@ -54,7 +54,7 @@ func RunSolution(day int) (string, error) {
 	case 5:
 		// Implement the solution for Day 5 here.
 		solutionPart1 := day5.SolvePart1(day5.Input)
-		solutionPart2 := day5.SolvePart2(day5.ExampleInput)
+		solutionPart2 := day5.SolvePart2(day5.Input)
 		solution := fmt.Sprintf("Part 1:\n\n%s\n\nPart 2:\n%s\n", solutionPart1, solutionPart2)
 		return solution, nil
 	// Add cases for other days here...

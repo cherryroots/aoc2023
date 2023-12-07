@@ -75,20 +75,28 @@ type seeds struct {
 	seed []int
 }
 
-func (s seeds) ConvertToRange() []int {
-	var output []int
+type seedRange struct {
+	lowest  int
+	highest int
+}
+
+func (s seeds) ConvertToRange() []seedRange {
 	var base, rangeLength int
+	var seedRanges []seedRange
 	for i, seed := range s.seed {
 		if i%2 == 0 {
 			base = seed
 		} else {
 			rangeLength = seed
-			for j := 0; j < rangeLength; j++ {
-				output = append(output, base+j)
-			}
+			seedRanges = append(seedRanges, seedRange{
+				lowest:  base,
+				highest: base + rangeLength - 1,
+			})
 		}
 	}
-	return output
+
+	return seedRanges
+
 }
 
 func (s seeds) String() string {
@@ -115,23 +123,49 @@ func (a almanac) String() string {
 
 func (a almanac) Run() []int {
 	var output []int
+	results := make(chan int, len(a.seeds.seed))
+
 	for _, seed := range a.seeds.seed {
-		for _, mapItem := range a.maps {
-			seed = mapItem.ConvertMaps(seed)
-		}
-		output = append(output, seed)
+		go func(s int) {
+			for _, mapItem := range a.maps {
+				s = mapItem.ConvertMaps(s)
+			}
+			results <- s
+		}(seed)
 	}
+
+	for range a.seeds.seed {
+		output = append(output, <-results)
+	}
+
+	close(results)
+
 	return output
 }
 
 func (a almanac) RunPaired() []int {
 	var output []int
-	for _, seed := range a.seeds.ConvertToRange() {
-		for _, mapItem := range a.maps {
-			seed = mapItem.ConvertMaps(seed)
+	results := make(chan int, len(a.seeds.ConvertToRange()))
+	ranges := a.seeds.ConvertToRange()
+
+	for _, seedRange := range ranges {
+		// for each seed from lower to higher seed
+		for i := seedRange.lowest; i <= seedRange.highest; i++ {
+			go func(s int) {
+				for _, mapItem := range a.maps {
+					s = mapItem.ConvertMaps(s)
+				}
+				results <- s
+			}(i)
 		}
-		output = append(output, seed)
 	}
+
+	for range a.seeds.ConvertToRange() {
+		output = append(output, <-results)
+	}
+
+	close(results)
+
 	return output
 }
 
