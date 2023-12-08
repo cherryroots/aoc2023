@@ -34,7 +34,6 @@ func (m almanacMap) ConvertMap(input int, reverse bool) (bool, int) {
 }
 
 type almanacMaps struct {
-	name string
 	maps []almanacMap
 }
 
@@ -73,7 +72,7 @@ type seedRange struct {
 	highest int
 }
 
-func (s seeds) ConvertToRange() []seedRange {
+func (s seeds) ConvertToRanges() []seedRange {
 	var base, rangeLength int
 	var seedRanges []seedRange
 
@@ -116,9 +115,8 @@ func (a almanac) Run() []int {
 // reverse searching, going over each location until one matches a seed range, for part 2
 func (a almanac) RunReverse() int {
 	maxLocation := int(^uint(0) >> 1)
-	seedRanges := a.seeds.ConvertToRange()
-	var reverseMaps []almanacMaps
-	reverseMaps = append(reverseMaps, a.maps...)
+	seedRanges := a.seeds.ConvertToRanges()
+	reverseMaps := append([]almanacMaps{}, a.maps...)
 	slices.Reverse(reverseMaps)
 
 	for i := 0; i < maxLocation; i++ {
@@ -195,7 +193,6 @@ func parseSeeds(input string) seeds {
 
 func parseMaps(input string) almanacMaps {
 	var almanacMaps almanacMaps
-	almanacMaps.name = input[:strings.Index(input, " ")]
 	lines := strings.Split(input, "\n")
 
 	for _, line := range lines[1:] {
