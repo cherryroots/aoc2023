@@ -2,14 +2,10 @@ package day05
 
 import (
 	"fmt"
+	"slices"
 	"strconv"
 	"strings"
 )
-
-type conversionResult struct {
-	valid bool
-	value int
-}
 
 type almanacMap struct {
 	destStart   int
@@ -17,15 +13,30 @@ type almanacMap struct {
 	rangeLength int
 }
 
+type conversionResult struct {
+	valid bool
+	value int
+}
+
 func (m almanacMap) String() string {
 	return fmt.Sprintf("%d %d %d", m.destStart, m.sourceStart, m.rangeLength)
 }
 
-func (m almanacMap) ConvertMap(input int) conversionResult {
-	if input >= m.sourceStart && input < m.sourceStart+m.rangeLength {
+func (m almanacMap) ConvertMap(input int, reverse bool) conversionResult {
+	var value, start, end int
+	if reverse {
+		value = m.sourceStart + input - m.destStart
+		start = m.destStart
+		end = m.destStart + m.rangeLength
+	} else {
+		value = m.destStart + input - m.sourceStart
+		start = m.sourceStart
+		end = m.sourceStart + m.rangeLength
+	}
+	if input >= start && input < end {
 		return conversionResult{
 			valid: true,
-			value: m.destStart + input - m.sourceStart,
+			value: value,
 		}
 	} else {
 		return conversionResult{
@@ -49,11 +60,16 @@ func (m almanacMaps) String() string {
 	return strings.Join(output, "\n")
 }
 
-func (m almanacMaps) ConvertMaps(input int) int {
+func (m almanacMaps) ConvertMaps(input int, reverse bool) int {
 	var lowest int = 0
 	var validConvertion bool = false
 	for _, mapItem := range m.maps {
-		convertion := mapItem.ConvertMap(input)
+		var convertion conversionResult
+		if reverse {
+			convertion = mapItem.ConvertMap(input, true)
+		} else {
+			convertion = mapItem.ConvertMap(input, false)
+		}
 		if convertion.valid {
 			if lowest == 0 {
 				validConvertion = true
@@ -133,6 +149,15 @@ func (a almanac) String() string {
 	return strings.Join(output, "\n\n")
 }
 
+func (a almanac) RunSeed(seed int) int {
+	for _, mapItem := range a.maps {
+		seed = mapItem.ConvertMaps(seed, false)
+	}
+
+	return seed
+}
+
+// slow brute force method iterating over all the seeds
 func (a almanac) Run() []int {
 	var output []int
 	results := make(chan int, len(a.seeds.seed))
@@ -140,7 +165,7 @@ func (a almanac) Run() []int {
 	for _, seed := range a.seeds.seed {
 		go func(s int) {
 			for _, mapItem := range a.maps {
-				s = mapItem.ConvertMaps(s)
+				s = mapItem.ConvertMaps(s, false)
 			}
 			results <- s
 		}(seed)
@@ -155,6 +180,31 @@ func (a almanac) Run() []int {
 	return output
 }
 
+// reverse searching, going over each location until one matches a seed range
+func (a almanac) RunReverse() int {
+	maxLocation := int(^uint(0) >> 1)
+	seedRanges := a.seeds.ConvertToRange(1)
+	var reverseMaps []almanacMaps
+	reverseMaps = append(reverseMaps, a.maps...)
+	slices.Reverse(reverseMaps)
+
+	for i := 0; i < maxLocation; i++ {
+		var potentialSeed int = i
+		for _, mapItem := range reverseMaps {
+			potentialSeed = mapItem.ConvertMaps(potentialSeed, true)
+		}
+
+		for _, sr := range seedRanges {
+			if potentialSeed >= sr.lowest && potentialSeed <= sr.highest {
+				return potentialSeed
+			}
+		}
+	}
+
+	return 0
+}
+
+// slow brute force method iterating over all the seeds in the ranges
 func (a almanac) RunPaired() []int {
 	var output []int
 	ranges := a.seeds.ConvertToRange(5)
@@ -163,19 +213,18 @@ func (a almanac) RunPaired() []int {
 
 	for _, sr := range ranges {
 		go func(sr seedRange) {
-			lowest := 0
 			lowChan := make(chan int, sr.highest-sr.lowest+1)
 			for i := sr.lowest; i <= sr.highest; i++ {
 				seed := i
 				go func(seed int) {
 					for _, mapItem := range a.maps {
-						seed = mapItem.ConvertMaps(seed)
+						seed = mapItem.ConvertMaps(seed, false)
 					}
 					lowChan <- seed
 
 				}(seed)
 			}
-
+			lowest := 0
 			for i := 0; i < sr.highest-sr.lowest+1; i++ {
 				if i == 0 {
 					lowest = <-lowChan
@@ -186,14 +235,10 @@ func (a almanac) RunPaired() []int {
 					}
 				}
 			}
-
 			channel <- lowest
-
 			fmt.Printf("Finished range: %d\n", sr.highest-sr.lowest+1)
-
 		}(sr)
 	}
-
 	for range ranges {
 		output = append(output, <-channel)
 	}
@@ -234,25 +279,14 @@ func SolvePart1(input string) string {
 func SolvePart2(input string) string {
 	almanac := parseInput(input)
 	var lowestSeed int
-	var seeds []int
 	output := ""
 
 	output += "\n\n"
 
-	for _, seed := range almanac.RunPaired() {
-		if seed < lowestSeed || lowestSeed == 0 {
-			lowestSeed = seed
-		}
-		seeds = append(seeds, seed)
-	}
+	lowestSeed = almanac.RunReverse()
+	seedOutput := almanac.RunSeed(lowestSeed)
 
-	for _, seed := range seeds {
-		if seed != lowestSeed {
-			output += fmt.Sprintf("<blue>%d</> ", seed)
-		} else {
-			output += fmt.Sprintf("<red>%d</> ", seed)
-		}
-	}
+	output += fmt.Sprintf("Lowest seed: <blue>%d</>, location: <red>%d</> ", lowestSeed, seedOutput)
 
 	return output
 }
