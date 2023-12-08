@@ -2,14 +2,13 @@ package day05
 
 import (
 	"fmt"
-	"sort"
 	"strconv"
 	"strings"
 )
 
 type conversionResult struct {
-	converted bool
-	value     int
+	valid bool
+	value int
 }
 
 type almanacMap struct {
@@ -25,13 +24,13 @@ func (m almanacMap) String() string {
 func (m almanacMap) ConvertMap(input int) conversionResult {
 	if input >= m.sourceStart && input < m.sourceStart+m.rangeLength {
 		return conversionResult{
-			converted: true,
-			value:     m.destStart + input - m.sourceStart,
+			valid: true,
+			value: m.destStart + input - m.sourceStart,
 		}
 	} else {
 		return conversionResult{
-			converted: false,
-			value:     input,
+			valid: false,
+			value: input,
 		}
 	}
 }
@@ -51,23 +50,26 @@ func (m almanacMaps) String() string {
 }
 
 func (m almanacMaps) ConvertMaps(input int) int {
-	var convertions []conversionResult
-	var validConvertions []conversionResult
+	var lowest int = 0
+	var validConvertion bool = false
 	for _, mapItem := range m.maps {
-		convertions = append(convertions, mapItem.ConvertMap(input))
-	}
-	for _, destination := range convertions {
-		if destination.converted {
-			validConvertions = append(validConvertions, destination)
+		convertion := mapItem.ConvertMap(input)
+		if convertion.valid {
+			if lowest == 0 {
+				validConvertion = true
+				lowest = convertion.value
+			} else if convertion.value < lowest {
+				validConvertion = true
+				lowest = convertion.value
+			}
+		} else {
+			continue
 		}
 	}
-	if len(validConvertions) == 0 {
+	if !validConvertion {
 		return input
 	} else {
-		sort.Slice(validConvertions, func(i, j int) bool {
-			return validConvertions[i].value < validConvertions[j].value
-		})
-		return validConvertions[0].value
+		return lowest
 	}
 }
 
@@ -80,7 +82,7 @@ type seedRange struct {
 	highest int
 }
 
-func (s seeds) ConvertToRange() []seedRange {
+func (s seeds) ConvertToRange(split int) []seedRange {
 	var base, rangeLength int
 	var seedRanges []seedRange
 	for i, seed := range s.seed {
@@ -88,10 +90,20 @@ func (s seeds) ConvertToRange() []seedRange {
 			base = seed
 		} else {
 			rangeLength = seed
-			seedRanges = append(seedRanges, seedRange{
-				lowest:  base,
-				highest: base + rangeLength - 1,
-			})
+			increment := rangeLength / split
+			for j := 0; j < split; j++ {
+				newLowest := base + (j * increment)
+				newHighest := newLowest + increment - 1
+
+				if j == split-1 {
+					newHighest = base + rangeLength - 1
+				}
+
+				seedRanges = append(seedRanges, seedRange{
+					lowest:  newLowest,
+					highest: newHighest,
+				})
+			}
 		}
 	}
 
@@ -145,26 +157,48 @@ func (a almanac) Run() []int {
 
 func (a almanac) RunPaired() []int {
 	var output []int
-	results := make(chan int, len(a.seeds.ConvertToRange()))
-	ranges := a.seeds.ConvertToRange()
+	ranges := a.seeds.ConvertToRange(5)
+	channel := make(chan int, len(ranges))
+	fmt.Printf("Ranges: %d\n", len(ranges))
 
-	for _, seedRange := range ranges {
-		// for each seed from lower to higher seed
-		for i := seedRange.lowest; i <= seedRange.highest; i++ {
-			go func(s int) {
-				for _, mapItem := range a.maps {
-					s = mapItem.ConvertMaps(s)
+	for _, sr := range ranges {
+		go func(sr seedRange) {
+			lowest := 0
+			lowChan := make(chan int, sr.highest-sr.lowest+1)
+			for i := sr.lowest; i <= sr.highest; i++ {
+				seed := i
+				go func(seed int) {
+					for _, mapItem := range a.maps {
+						seed = mapItem.ConvertMaps(seed)
+					}
+					lowChan <- seed
+
+				}(seed)
+			}
+
+			for i := 0; i < sr.highest-sr.lowest+1; i++ {
+				if i == 0 {
+					lowest = <-lowChan
+				} else {
+					seed := <-lowChan
+					if seed < lowest {
+						lowest = seed
+					}
 				}
-				results <- s
-			}(i)
-		}
+			}
+
+			channel <- lowest
+
+			fmt.Printf("Finished range: %d\n", sr.highest-sr.lowest+1)
+
+		}(sr)
 	}
 
-	for range a.seeds.ConvertToRange() {
-		output = append(output, <-results)
+	for range ranges {
+		output = append(output, <-channel)
 	}
 
-	close(results)
+	close(channel)
 
 	return output
 }
