@@ -64,12 +64,7 @@ func (m almanacMaps) ConvertMaps(input int, reverse bool) int {
 	var lowest int = 0
 	var validConvertion bool = false
 	for _, mapItem := range m.maps {
-		var convertion conversionResult
-		if reverse {
-			convertion = mapItem.ConvertMap(input, true)
-		} else {
-			convertion = mapItem.ConvertMap(input, false)
-		}
+		convertion := mapItem.ConvertMap(input, reverse)
 		if convertion.valid {
 			if lowest == 0 {
 				validConvertion = true
