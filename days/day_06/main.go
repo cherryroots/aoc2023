@@ -13,7 +13,7 @@ func SolvePart2(input string) string {
 }
 
 func parseInput(input string) string {
-	parts := strings.Split(input, "\n\n")
+	parts := strings.Split(input, "\n")
 	output := ""
 
 	for _, part := range parts[1:] {

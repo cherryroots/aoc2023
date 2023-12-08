@@ -26,7 +26,7 @@ func (m almanacMap) ConvertMap(input int, reverse bool) (bool, int) {
 		end = m.sourceStart + m.rangeLength
 	}
 
-	if input >= start && input < end {
+	if start <= input && input < end {
 		return true, value
 	} else {
 		return false, value
@@ -38,29 +38,14 @@ type almanacMaps struct {
 }
 
 func (m almanacMaps) ConvertMaps(input int, reverse bool) int {
-	var lowest int = 0
-	var validConvertion bool = false
-
 	for _, mapItem := range m.maps {
 		valid, value := mapItem.ConvertMap(input, reverse)
 		if valid {
-			if lowest == 0 {
-				validConvertion = true
-				lowest = value
-			} else if value < lowest {
-				validConvertion = true
-				lowest = value
-			}
-		} else {
-			continue
+			return value
 		}
 	}
 
-	if !validConvertion {
-		return input
-	} else {
-		return lowest
-	}
+	return input
 }
 
 type seeds struct {
@@ -125,7 +110,7 @@ func (a almanac) RunReverse() int {
 			potentialSeed = mapItem.ConvertMaps(potentialSeed, true)
 		}
 		for _, sr := range seedRanges {
-			if potentialSeed >= sr.lowest && potentialSeed <= sr.highest {
+			if sr.lowest <= potentialSeed && potentialSeed <= sr.highest {
 				return potentialSeed
 			}
 		}
