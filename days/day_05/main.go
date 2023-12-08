@@ -5,6 +5,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type almanacMap struct {
@@ -65,7 +66,7 @@ func (s seeds) ConvertToRanges() []seedRange {
 		if i%2 == 0 {
 			base = seed
 		} else {
-			rangeLength = seed - 1
+			rangeLength = seed
 			seedRanges = append(seedRanges, seedRange{base, base + rangeLength})
 		}
 	}
@@ -97,7 +98,47 @@ func (a almanac) Run() []int {
 	return output
 }
 
-// reverse searching, going over each location until one matches a seed range, for part 2
+func (a almanac) RunIntervals() int {
+	seeds := a.seeds.ConvertToRanges()
+	for _, mapItem := range a.maps {
+		var newSeedRanges []seedRange
+		for len(seeds) > 0 {
+			start, end := seeds[0].lowest, seeds[0].highest
+			seeds = seeds[1:]
+			found := false
+			for _, eachMap := range mapItem.maps {
+				dst, src, length := eachMap.destStart, eachMap.sourceStart, eachMap.rangeLength
+				overlapStart := max(start, src)
+				overlapEnd := min(end, src+length)
+				if overlapStart < overlapEnd {
+					found = true
+					newSeedRanges = append(newSeedRanges, seedRange{overlapStart - src + dst, overlapEnd - src + dst})
+					if overlapStart > start {
+						seeds = append(seeds, seedRange{start, overlapStart})
+					}
+					if end > overlapEnd {
+						seeds = append(seeds, seedRange{overlapEnd, end})
+					}
+					break
+				}
+			}
+			if !found {
+				newSeedRanges = append(newSeedRanges, seedRange{start, end})
+			}
+		}
+		seeds = newSeedRanges
+	}
+	var lowest int
+	for _, seed := range seeds {
+		if seed.lowest < lowest || lowest == 0 {
+			lowest = seed.lowest
+		}
+	}
+
+	return lowest
+}
+
+// reverse searching. Takes about 0.92 seconds to run
 func (a almanac) RunReverse() int {
 	maxLocation := int(^uint(0) >> 1)
 	seedRanges := a.seeds.ConvertToRanges()
@@ -110,7 +151,7 @@ func (a almanac) RunReverse() int {
 			potentialSeed = mapItem.ConvertMaps(potentialSeed, true)
 		}
 		for _, sr := range seedRanges {
-			if sr.lowest <= potentialSeed && potentialSeed <= sr.highest {
+			if sr.lowest <= potentialSeed && potentialSeed < sr.highest {
 				return potentialSeed
 			}
 		}
@@ -145,9 +186,14 @@ func SolvePart1(input string) string {
 
 func SolvePart2(input string) string {
 	almanac := parseInput(input)
-	lowestSeed := almanac.RunReverse()
-	seedOutput := almanac.RunSeed(lowestSeed)
-	output := fmt.Sprintf("Seed: <blue>%d</>, lowest location: <red>%d</> ", lowestSeed, seedOutput)
+	startInterval := time.Now()
+	lowestLocation := almanac.RunIntervals()
+	elapsedInterval := time.Since(startInterval)
+	startReverse := time.Now()
+	_ = almanac.RunReverse()
+	elapsedReverse := time.Since(startReverse)
+	seedOutput := almanac.maps[0].ConvertMaps(lowestLocation, true)
+	output := fmt.Sprintf("Seed: <blue>%d</>, lowest location: <red>%d</>\nElapsed interval: %s\nElapsed reverse: %s", seedOutput, lowestLocation, elapsedInterval, elapsedReverse)
 
 	return output
 }
