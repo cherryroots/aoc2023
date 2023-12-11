@@ -8,8 +8,9 @@ import (
 )
 
 type round struct {
-	hand []int
-	bid  int
+	hand      []int
+	jokerHand []int
+	bid       int
 }
 
 type rangeOfRounds struct {
@@ -154,6 +155,43 @@ func categorizeHands(r round, types []rangeOfRounds) []rangeOfRounds {
 	return types
 }
 
+func generateAllPossibleRounds(r round) []round {
+	var allPossibleRounds []round
+
+	var wildcardPositions []int
+	for i, card := range r.hand {
+		if card == 1 {
+			wildcardPositions = append(wildcardPositions, i)
+		}
+	}
+
+	if len(wildcardPositions) == 0 {
+		allPossibleRounds = append(allPossibleRounds, r)
+	} else {
+		generateWildcardCombinations(r, &allPossibleRounds, wildcardPositions, 0)
+	}
+
+	return allPossibleRounds
+}
+
+// Recursive function to generate combinations of wildcards
+func generateWildcardCombinations(r round, allPossibleRounds *[]round, wildcardPositions []int, index int) {
+	if index == len(wildcardPositions) {
+		// A complete combination is generated, add it to the results
+		newRound := round{hand: make([]int, len(r.hand)), jokerHand: make([]int, len(r.hand)), bid: r.bid}
+		copy(newRound.hand, r.hand)
+		copy(newRound.jokerHand, r.jokerHand)
+		*allPossibleRounds = append(*allPossibleRounds, newRound)
+		return
+	}
+
+	pos := wildcardPositions[index]
+	for cardValue := 1; cardValue <= 14; cardValue++ {
+		r.jokerHand[pos] = cardValue
+		generateWildcardCombinations(r, allPossibleRounds, wildcardPositions, index+1)
+	}
+}
+
 func SolvePart1(input string) string {
 	rounds := parseInput(input, false)
 	output := ""
@@ -181,14 +219,28 @@ func SolvePart1(input string) string {
 }
 
 func SolvePart2(input string) string {
-	rounds := parseInput(input, false)
+	rounds := parseInput(input, true)
 	output := ""
 	result := 0
 	types := make([]rangeOfRounds, 7)
 	var allRounds []round
 
 	for _, r := range rounds {
-		types = categorizeHands(r, types)
+		// on every spot that's a 1, generate all possible hands where the 1 can be any value from 1 to 14
+		possibleHands := make([]rangeOfRounds, 7)
+		bestrounds := rangeOfRounds{}
+		uniqueRounds := generateAllPossibleRounds(r)
+		for _, r := range uniqueRounds {
+			possibleHands = categorizeHands(r, possibleHands)
+		}
+		for i := len(possibleHands) - 1; i >= 0; i-- {
+			if len(possibleHands[i].rounds) > 0 {
+				bestrounds = possibleHands[i]
+				break
+			}
+		}
+		bestrounds.rounds = sortRounds(bestrounds.rounds)
+		types = categorizeHands(bestrounds.rounds[0], types)
 	}
 
 	for _, r := range types {
@@ -198,7 +250,7 @@ func SolvePart2(input string) string {
 
 	for i, r := range allRounds {
 		result += (i + 1) * r.bid
-		output += fmt.Sprintf("<blue>%d</> * <red>%d</>, %v\n", i+1, r.bid, r.hand)
+		output += fmt.Sprintf("<blue>%d</> * <red>%d</>, %v, %v\n", i+1, r.bid, r.hand, r.jokerHand)
 	}
 
 	output += fmt.Sprintf("\n<blue>%d</>", result)
@@ -238,7 +290,7 @@ func parseInput(input string, part2 bool) []round {
 			hand[i] = mapCard(strHand[i], part2)
 		}
 		bid, _ := strconv.Atoi(fields[1])
-		output = append(output, round{hand, bid})
+		output = append(output, round{hand, hand, bid})
 	}
 
 	return output
