@@ -11,6 +11,8 @@ import (
 	day3 "aoc/days/day_03"
 	day4 "aoc/days/day_04"
 	day5 "aoc/days/day_05"
+	day6 "aoc/days/day_06"
+	day7 "aoc/days/day_07"
 )
 
 type day struct {
@@ -26,6 +28,8 @@ var days = map[int]day{
 	3: {day3.Input, day3.ExampleInput, day3.SolvePart1, day3.SolvePart2},
 	4: {day4.Input, day4.ExampleInput, day4.SolvePart1, day4.SolvePart2},
 	5: {day5.Input, day5.ExampleInput, day5.SolvePart1, day5.SolvePart2},
+	6: {day6.Input, day6.ExampleInput, day6.SolvePart1, day6.SolvePart2},
+	7: {day7.Input, day7.ExampleInput, day7.SolvePart1, day7.SolvePart2},
 }
 
 func (d day) Solve(input string) string {
@@ -34,14 +38,14 @@ func (d day) Solve(input string) string {
 
 func main() {
 	start := time.Now()
-	arg := 5
+	arg := 7
 
 	if arg > len(days) {
 		color.Red.Println("Invalid day")
 		return
 	}
 
-	result := days[arg].Solve(days[arg].input)
+	result := days[arg].Solve(days[arg].exampleInput)
 	color.Print(result)
 	elapsed := time.Since(start)
 	fmt.Printf("Program took %s\n", elapsed)
