@@ -22,8 +22,7 @@ func Calibrate(s string) string {
 
 	sum := 0
 	for range lines {
-		number := <-c
-		sum += number
+		sum += <-c
 	}
 
 	return strconv.Itoa(sum)

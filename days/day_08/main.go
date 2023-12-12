@@ -20,16 +20,14 @@ type element struct {
 }
 
 func (n *node) Step() {
-	element := n.elements[n.curElement]
 	if n.insIndex >= len(n.instructions) {
 		n.insIndex = 0
 	}
 
-	instruction := n.instructions[n.insIndex]
-	if instruction == "R" {
-		n.curElement = element.right
+	if n.instructions[n.insIndex] == "R" {
+		n.curElement = n.elements[n.curElement].right
 	} else {
-		n.curElement = element.left
+		n.curElement = n.elements[n.curElement].left
 	}
 
 	n.insIndex++
