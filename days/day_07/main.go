@@ -7,79 +7,65 @@ import (
 	"strings"
 )
 
-type round struct {
-	hand      []int
-	jokerHand []int
-	bid       int
+type cards struct {
+	hand         []int
+	originalHand []int
+	bid          int
 }
 
-type rangeOfRounds struct {
+type rangeOfCards struct {
 	name   string
-	rounds []round
+	rounds []cards
 }
 
-func (r round) isFlush() bool {
+func (r cards) isFlush() bool {
 	sh := r.SortHand()
 
 	return sh[0] == sh[4]
 }
 
-func (r round) isFourOfAKind() bool {
+func (r cards) isFourOfAKind() bool {
 	sh := r.SortHand()
 
 	// checking [ a, a, a, a, b]
-	case1 := sh[0] == sh[1] &&
-		sh[1] == sh[2] &&
-		sh[2] == sh[3]
+	case1 := sh[0] == sh[1] && sh[1] == sh[2] && sh[2] == sh[3]
 	// checking [ a, b, b, b, b]
-	case2 := sh[1] == sh[2] &&
-		sh[2] == sh[3] &&
-		sh[3] == sh[4]
+	case2 := sh[1] == sh[2] && sh[2] == sh[3] && sh[3] == sh[4]
 	return case1 || case2
 }
 
-func (r round) isFullHouse() bool {
+func (r cards) isFullHouse() bool {
 	sh := r.SortHand()
 	// checking [ a, a, a, b, b]
-	case1 := sh[0] == sh[1] &&
-		sh[1] == sh[2] &&
-		sh[3] == sh[4]
+	case1 := sh[0] == sh[1] && sh[1] == sh[2] && sh[3] == sh[4]
 	// checking [ a, a, b, b, b]
-	case2 := sh[0] == sh[1] &&
-		sh[2] == sh[3] &&
-		sh[3] == sh[4]
+	case2 := sh[0] == sh[1] && sh[2] == sh[3] && sh[3] == sh[4]
 	return case1 || case2
 }
 
-func (r round) isThreeOfAKind() bool {
+func (r cards) isThreeOfAKind() bool {
 	sh := r.SortHand()
 	// checking [ x, x, x, a, b]
-	case1 := sh[0] == sh[1] &&
-		sh[1] == sh[2]
+	case1 := sh[0] == sh[1] && sh[1] == sh[2]
 	// checking [a, x, x, x, b]
-	case2 := sh[1] == sh[2] &&
-		sh[2] == sh[3]
+	case2 := sh[1] == sh[2] && sh[2] == sh[3]
 	// checking [a, b, x, x, x]
-	case3 := sh[2] == sh[3] &&
-		sh[3] == sh[4]
+	case3 := sh[2] == sh[3] && sh[3] == sh[4]
 	return case1 || case2 || case3
 }
 
-func (r round) is2Pair() bool {
+func (r cards) is2Pair() bool {
 	sh := r.SortHand()
 	// checking [ a, a, b, b, c]
-	case1 := sh[0] == sh[1] &&
-		sh[2] == sh[3]
+	case1 := sh[0] == sh[1] && sh[2] == sh[3]
 	// checking [ a, a, b, c, c]
-	case2 := sh[0] == sh[1] &&
-		sh[3] == sh[4]
+	case2 := sh[0] == sh[1] && sh[3] == sh[4]
 	// checking [ a, b, b, c, c]
-	case3 := sh[1] == sh[2] &&
-		sh[3] == sh[4]
+	case3 := sh[1] == sh[2] && sh[3] == sh[4]
 	return case1 || case2 || case3
 }
 
-func (r round) isPair() bool {
+func (r cards) isPair() bool {
 	sh := r.SortHand()
 	// checking [ a, a, x, y, z]
 	case1 := sh[0] == sh[1]
@@ -92,9 +78,9 @@ func (r round) isPair() bool {
 	return case1 || case2 || case3 || case4
 }
 
-func (r round) SortHand() []int {
+func (r cards) SortHand() []int {
 	var sortedHand []int
-	sortedHand = append(sortedHand, r.hand...)
+	copy(sortedHand, r.hand)
 
 	sort.SliceStable(sortedHand, func(i, j int) bool {
 		return sortedHand[i] < sortedHand[j]
@@ -103,14 +89,14 @@ func (r round) SortHand() []int {
 	return sortedHand
 }
 
-func sortRounds(input []round) []round {
-	var sortedRounds []round
+func sortRounds(input []cards) []cards {
+	var sortedRounds []cards
 	sortedRounds = append(sortedRounds, input...)
 
 	sort.SliceStable(sortedRounds, func(i, j int) bool {
 		for k := 0; k < len(sortedRounds[i].hand); k++ {
-			if sortedRounds[i].hand[k] != sortedRounds[j].hand[k] {
-				return sortedRounds[i].hand[k] < sortedRounds[j].hand[k]
+			if sortedRounds[i].originalHand[k] != sortedRounds[j].originalHand[k] {
+				return sortedRounds[i].originalHand[k] < sortedRounds[j].originalHand[k]
 			}
 		}
 		return sortedRounds[i].bid < sortedRounds[j].bid
@@ -119,7 +105,7 @@ func sortRounds(input []round) []round {
 	return sortedRounds
 }
 
-func categorizeHands(r round, types []rangeOfRounds) []rangeOfRounds {
+func categorizeHands(r cards, types []rangeOfCards) []rangeOfCards {
 	if r.isFlush() {
 		types[6].name = "flush"
 		types[6].rounds = append(types[6].rounds, r)
@@ -155,8 +141,8 @@ func categorizeHands(r round, types []rangeOfRounds) []rangeOfRounds {
 	return types
 }
 
-func generateAllPossibleRounds(r round) []round {
-	var allPossibleRounds []round
+func generateAllPossibleCards(r cards) []cards {
+	var allPossibleRounds []cards
 
 	var wildcardPositions []int
 	for i, card := range r.hand {
@@ -175,19 +161,19 @@ func generateAllPossibleRounds(r round) []round {
 }
 
 // Recursive function to generate combinations of wildcards
-func generateWildcardCombinations(r round, allPossibleRounds *[]round, wildcardPositions []int, index int) {
+func generateWildcardCombinations(r cards, allPossibleRounds *[]cards, wildcardPositions []int, index int) {
 	if index == len(wildcardPositions) {
 		// A complete combination is generated, add it to the results
-		newRound := round{hand: make([]int, len(r.hand)), jokerHand: make([]int, len(r.hand)), bid: r.bid}
+		newRound := cards{hand: make([]int, len(r.hand)), originalHand: make([]int, len(r.originalHand)), bid: r.bid}
 		copy(newRound.hand, r.hand)
-		copy(newRound.jokerHand, r.jokerHand)
+		copy(newRound.originalHand, r.originalHand)
 		*allPossibleRounds = append(*allPossibleRounds, newRound)
 		return
 	}
 
 	pos := wildcardPositions[index]
 	for cardValue := 1; cardValue <= 14; cardValue++ {
-		r.jokerHand[pos] = cardValue
+		r.hand[pos] = cardValue
 		generateWildcardCombinations(r, allPossibleRounds, wildcardPositions, index+1)
 	}
 }
@@ -196,8 +182,8 @@ func SolvePart1(input string) string {
 	rounds := parseInput(input, false)
 	output := ""
 	result := 0
-	types := make([]rangeOfRounds, 7)
-	var allRounds []round
+	types := make([]rangeOfCards, 7)
+	var allRounds []cards
 
 	for _, r := range rounds {
 		types = categorizeHands(r, types)
@@ -222,25 +208,24 @@ func SolvePart2(input string) string {
 	rounds := parseInput(input, true)
 	output := ""
 	result := 0
-	types := make([]rangeOfRounds, 7)
-	var allRounds []round
+	types := make([]rangeOfCards, 7)
+	var allRounds []cards
 
 	for _, r := range rounds {
-		// on every spot that's a 1, generate all possible hands where the 1 can be any value from 1 to 14
-		possibleHands := make([]rangeOfRounds, 7)
-		bestrounds := rangeOfRounds{}
-		uniqueRounds := generateAllPossibleRounds(r)
+		possibleHands := make([]rangeOfCards, 7)
+		bestHands := rangeOfCards{}
+		uniqueRounds := generateAllPossibleCards(r)
 		for _, r := range uniqueRounds {
 			possibleHands = categorizeHands(r, possibleHands)
 		}
 		for i := len(possibleHands) - 1; i >= 0; i-- {
 			if len(possibleHands[i].rounds) > 0 {
-				bestrounds = possibleHands[i]
+				bestHands = possibleHands[i]
 				break
 			}
 		}
-		bestrounds.rounds = sortRounds(bestrounds.rounds)
-		types = categorizeHands(bestrounds.rounds[0], types)
+		bestHands.rounds = sortRounds(bestHands.rounds)
+		types = categorizeHands(bestHands.rounds[0], types)
 	}
 
 	for _, r := range types {
@@ -250,7 +235,7 @@ func SolvePart2(input string) string {
 
 	for i, r := range allRounds {
 		result += (i + 1) * r.bid
-		output += fmt.Sprintf("<blue>%d</> * <red>%d</>, %v, %v\n", i+1, r.bid, r.hand, r.jokerHand)
+		output += fmt.Sprintf("<blue>%d</> * <red>%d</>, %v, %v\n", i+1, r.bid, r.hand, r.originalHand)
 	}
 
 	output += fmt.Sprintf("\n<blue>%d</>", result)
@@ -267,30 +252,30 @@ func mapCard(card string, part2 bool) int {
 		"A": 14, "K": 13, "Q": 12, "T": 10, "9": 9,
 		"8": 8, "7": 7, "6": 6, "5": 5, "4": 4, "3": 3, "2": 2, "J": 1,
 	}
-
 	if part2 {
 		cardMap = cardMapPart2
 	}
-
 	if value, ok := cardMap[card]; ok {
 		return value
 	}
 	return 0
 }
 
-func parseInput(input string, part2 bool) []round {
+func parseInput(input string, part2 bool) []cards {
 	parts := strings.Split(input, "\n")
-	var output []round
+	var output []cards
 
 	for _, part := range parts {
 		fields := strings.Fields(part)
 		strHand := strings.Split(fields[0], "")
 		hand := make([]int, len(strHand))
+		originalHand := make([]int, len(strHand))
 		for i := range hand {
 			hand[i] = mapCard(strHand[i], part2)
 		}
 		bid, _ := strconv.Atoi(fields[1])
-		output = append(output, round{hand, hand, bid})
+		copy(originalHand, hand)
+		output = append(output, cards{hand, originalHand, bid})
 	}
 
 	return output
