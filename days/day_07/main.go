@@ -160,7 +160,6 @@ func generateAllPossibleCards(r cards) []cards {
 	return allPossibleRounds
 }
 
-// Recursive function to generate combinations of wildcards
 func generateWildcardCombinations(r cards, allPossibleRounds *[]cards, wildcardPositions []int, index int) {
 	if index == len(wildcardPositions) {
 		// A complete combination is generated, add it to the results
