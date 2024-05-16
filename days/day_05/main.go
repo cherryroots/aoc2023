@@ -29,9 +29,8 @@ func (m almanacMap) ConvertMap(input int, reverse bool) (bool, int) {
 
 	if start <= input && input < end {
 		return true, value
-	} else {
-		return false, value
 	}
+	return false, value
 }
 
 type almanacMaps struct {
@@ -49,20 +48,16 @@ func (m almanacMaps) ConvertMaps(input int, reverse bool) int {
 	return input
 }
 
-type seeds struct {
-	seeds []int
-}
-
 type seedRange struct {
 	lowest  int
 	highest int
 }
 
-func (s seeds) ConvertToRanges() []seedRange {
+func (a almanac) ConvertToRanges() []seedRange {
 	var base, rangeLength int
 	var seedRanges []seedRange
 
-	for i, seed := range s.seeds {
+	for i, seed := range a.seeds {
 		if i%2 == 0 {
 			base = seed
 		} else {
@@ -75,8 +70,8 @@ func (s seeds) ConvertToRanges() []seedRange {
 }
 
 type almanac struct {
-	seeds
-	maps []almanacMaps
+	seeds []int
+	maps  []almanacMaps
 }
 
 func (a almanac) RunSeed(seed int) int {
@@ -91,7 +86,7 @@ func (a almanac) RunSeed(seed int) int {
 func (a almanac) Run() []int {
 	var output []int
 
-	for _, seed := range a.seeds.seeds {
+	for _, seed := range a.seeds {
 		output = append(output, a.RunSeed(seed))
 	}
 
@@ -99,7 +94,7 @@ func (a almanac) Run() []int {
 }
 
 func (a almanac) RunIntervals() int {
-	seeds := a.seeds.ConvertToRanges()
+	seeds := a.ConvertToRanges()
 	for _, mapItem := range a.maps {
 		var newSeedRanges []seedRange
 		for len(seeds) > 0 {
@@ -141,12 +136,12 @@ func (a almanac) RunIntervals() int {
 // reverse searching. Takes about 0.92 seconds to run
 func (a almanac) RunReverse() int {
 	maxLocation := int(^uint(0) >> 1)
-	seedRanges := a.seeds.ConvertToRanges()
+	seedRanges := a.ConvertToRanges()
 	reverseMaps := append([]almanacMaps{}, a.maps...)
 	slices.Reverse(reverseMaps)
 
 	for i := 0; i < maxLocation; i++ {
-		var potentialSeed int = i
+		potentialSeed := i
 		for _, mapItem := range reverseMaps {
 			potentialSeed = mapItem.ConvertMaps(potentialSeed, true)
 		}
@@ -210,13 +205,13 @@ func parseInput(input string) almanac {
 	return almanac
 }
 
-func parseSeeds(input string) seeds {
-	var seeds seeds
+func parseSeeds(input string) []int {
+	var seeds []int
 	seedStrings := strings.Split(input, " ")
 
 	for _, seedString := range seedStrings[1:] {
 		seed, _ := strconv.Atoi(seedString)
-		seeds.seeds = append(seeds.seeds, seed)
+		seeds = append(seeds, seed)
 	}
 
 	return seeds

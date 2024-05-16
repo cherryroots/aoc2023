@@ -2,9 +2,12 @@ package main
 
 import (
 	"fmt"
+	"log"
+	"os"
 	"time"
 
 	"github.com/gookit/color"
+	"github.com/urfave/cli/v2"
 
 	day1 "aoc/days/day_01"
 	day2 "aoc/days/day_02"
@@ -39,15 +42,40 @@ func (d day) Solve(input string) string {
 }
 
 func main() {
-	start := time.Now()
-	arg := 8
+	var day int
+	app := &cli.App{
+		Name:  "Advent of Code",
+		Usage: "Solve the puzzle for the given day",
+		Flags: []cli.Flag{
+			&cli.IntFlag{
+				Name:        "day",
+				Usage:       "Which day to solve",
+				Aliases:     []string{"d"},
+				Value:       1,
+				Destination: &day,
+			},
+		},
+		Action: func(_ *cli.Context) error {
+			runDay(day)
+			return nil
+		},
+	}
 
-	if arg > len(days) {
+	err := app.Run(os.Args)
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+func runDay(day int) {
+	start := time.Now()
+
+	if day > len(days) {
 		color.Red.Println("Invalid day")
 		return
 	}
 
-	result := days[arg].Solve(days[arg].input)
+	result := days[day].Solve(days[day].input)
 	color.Print(result)
 	elapsed := time.Since(start)
 	fmt.Printf("Program took %s\n", elapsed)
