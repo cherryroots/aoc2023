@@ -7,24 +7,24 @@ import (
 	"strings"
 )
 
-type cards struct {
+type hands struct {
 	hand         []int
 	originalHand []int
 	bid          int
 }
 
-type rangeOfCards struct {
+type rangeOfRounds struct {
 	name   string
-	rounds []cards
+	rounds []hands
 }
 
-func (r cards) isFlush() bool {
+func (r hands) isFlush() bool {
 	sh := r.SortHand()
 
 	return sh[0] == sh[4]
 }
 
-func (r cards) isFourOfAKind() bool {
+func (r hands) isFourOfAKind() bool {
 	sh := r.SortHand()
 
 	// checking [ a, a, a, a, b]
@@ -34,7 +34,7 @@ func (r cards) isFourOfAKind() bool {
 	return case1 || case2
 }
 
-func (r cards) isFullHouse() bool {
+func (r hands) isFullHouse() bool {
 	sh := r.SortHand()
 	// checking [ a, a, a, b, b]
 	case1 := sh[0] == sh[1] && sh[1] == sh[2] && sh[3] == sh[4]
@@ -43,7 +43,7 @@ func (r cards) isFullHouse() bool {
 	return case1 || case2
 }
 
-func (r cards) isThreeOfAKind() bool {
+func (r hands) isThreeOfAKind() bool {
 	sh := r.SortHand()
 	// checking [ x, x, x, a, b]
 	case1 := sh[0] == sh[1] && sh[1] == sh[2]
@@ -54,7 +54,7 @@ func (r cards) isThreeOfAKind() bool {
 	return case1 || case2 || case3
 }
 
-func (r cards) is2Pair() bool {
+func (r hands) is2Pair() bool {
 	sh := r.SortHand()
 	// checking [ a, a, b, b, c]
 	case1 := sh[0] == sh[1] && sh[2] == sh[3]
@@ -65,7 +65,7 @@ func (r cards) is2Pair() bool {
 	return case1 || case2 || case3
 }
 
-func (r cards) isPair() bool {
+func (r hands) isPair() bool {
 	sh := r.SortHand()
 	// checking [ a, a, x, y, z]
 	case1 := sh[0] == sh[1]
@@ -78,9 +78,9 @@ func (r cards) isPair() bool {
 	return case1 || case2 || case3 || case4
 }
 
-func (r cards) SortHand() []int {
+func (r hands) SortHand() []int {
 	var sortedHand []int
-	copy(sortedHand, r.hand)
+	sortedHand = append(sortedHand, r.hand...)
 
 	sort.SliceStable(sortedHand, func(i, j int) bool {
 		return sortedHand[i] < sortedHand[j]
@@ -89,14 +89,14 @@ func (r cards) SortHand() []int {
 	return sortedHand
 }
 
-func sortRounds(input []cards) []cards {
-	var sortedRounds []cards
+func sortRounds(input []hands) []hands {
+	var sortedRounds []hands
 	sortedRounds = append(sortedRounds, input...)
 
 	sort.SliceStable(sortedRounds, func(i, j int) bool {
 		for k := 0; k < len(sortedRounds[i].hand); k++ {
-			if sortedRounds[i].originalHand[k] != sortedRounds[j].originalHand[k] {
-				return sortedRounds[i].originalHand[k] < sortedRounds[j].originalHand[k]
+			if sortedRounds[i].hand[k] != sortedRounds[j].hand[k] {
+				return sortedRounds[i].hand[k] < sortedRounds[j].hand[k]
 			}
 		}
 		return sortedRounds[i].bid < sortedRounds[j].bid
@@ -105,7 +105,7 @@ func sortRounds(input []cards) []cards {
 	return sortedRounds
 }
 
-func categorizeHands(r cards, types []rangeOfCards) []rangeOfCards {
+func categorizeHands(r hands, types []rangeOfRounds) []rangeOfRounds {
 	if r.isFlush() {
 		types[6].name = "flush"
 		types[6].rounds = append(types[6].rounds, r)
@@ -141,8 +141,8 @@ func categorizeHands(r cards, types []rangeOfCards) []rangeOfCards {
 	return types
 }
 
-func generateAllPossibleCards(r cards) []cards {
-	var allPossibleRounds []cards
+func generateAllPossibleCards(r hands) []hands {
+	var allPossibleRounds []hands
 
 	var wildcardPositions []int
 	for i, card := range r.hand {
@@ -160,10 +160,10 @@ func generateAllPossibleCards(r cards) []cards {
 	return allPossibleRounds
 }
 
-func generateWildcardCombinations(r cards, allPossibleRounds *[]cards, wildcardPositions []int, index int) {
+func generateWildcardCombinations(r hands, allPossibleRounds *[]hands, wildcardPositions []int, index int) {
 	if index == len(wildcardPositions) {
 		// A complete combination is generated, add it to the results
-		newRound := cards{hand: make([]int, len(r.hand)), originalHand: make([]int, len(r.originalHand)), bid: r.bid}
+		newRound := hands{hand: make([]int, len(r.hand)), originalHand: make([]int, len(r.hand)), bid: r.bid}
 		copy(newRound.hand, r.hand)
 		copy(newRound.originalHand, r.originalHand)
 		*allPossibleRounds = append(*allPossibleRounds, newRound)
@@ -172,7 +172,7 @@ func generateWildcardCombinations(r cards, allPossibleRounds *[]cards, wildcardP
 
 	pos := wildcardPositions[index]
 	for cardValue := 1; cardValue <= 14; cardValue++ {
-		r.hand[pos] = cardValue
+		r.originalHand[pos] = cardValue
 		generateWildcardCombinations(r, allPossibleRounds, wildcardPositions, index+1)
 	}
 }
@@ -181,8 +181,8 @@ func SolvePart1(input string) string {
 	rounds := parseInput(input, false)
 	output := ""
 	result := 0
-	types := make([]rangeOfCards, 7)
-	var allRounds []cards
+	types := make([]rangeOfRounds, 7)
+	var allRounds []hands
 
 	for _, r := range rounds {
 		types = categorizeHands(r, types)
@@ -207,12 +207,12 @@ func SolvePart2(input string) string {
 	rounds := parseInput(input, true)
 	output := ""
 	result := 0
-	types := make([]rangeOfCards, 7)
-	var allRounds []cards
+	types := make([]rangeOfRounds, 7)
+	var allRounds []hands
 
 	for _, r := range rounds {
-		possibleHands := make([]rangeOfCards, 7)
-		bestHands := rangeOfCards{}
+		possibleHands := make([]rangeOfRounds, 7)
+		bestHands := rangeOfRounds{}
 		uniqueRounds := generateAllPossibleCards(r)
 		for _, r := range uniqueRounds {
 			possibleHands = categorizeHands(r, possibleHands)
@@ -243,11 +243,11 @@ func SolvePart2(input string) string {
 }
 
 func mapCard(card string, part2 bool) int {
-	var cardMap = map[string]int{
+	cardMap := map[string]int{
 		"A": 14, "K": 13, "Q": 12, "J": 11, "T": 10, "9": 9,
 		"8": 8, "7": 7, "6": 6, "5": 5, "4": 4, "3": 3, "2": 2,
 	}
-	var cardMapPart2 = map[string]int{
+	cardMapPart2 := map[string]int{
 		"A": 14, "K": 13, "Q": 12, "T": 10, "9": 9,
 		"8": 8, "7": 7, "6": 6, "5": 5, "4": 4, "3": 3, "2": 2, "J": 1,
 	}
@@ -260,9 +260,9 @@ func mapCard(card string, part2 bool) int {
 	return 0
 }
 
-func parseInput(input string, part2 bool) []cards {
+func parseInput(input string, part2 bool) []hands {
 	parts := strings.Split(input, "\n")
-	var output []cards
+	var output []hands
 
 	for _, part := range parts {
 		fields := strings.Fields(part)
@@ -274,7 +274,7 @@ func parseInput(input string, part2 bool) []cards {
 		}
 		bid, _ := strconv.Atoi(fields[1])
 		copy(originalHand, hand)
-		output = append(output, cards{hand, originalHand, bid})
+		output = append(output, hands{hand, originalHand, bid})
 	}
 
 	return output

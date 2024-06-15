@@ -29,9 +29,8 @@ func Calibrate(s string) string {
 }
 
 func correctElfMistake(line string, c chan int) {
-	numberList := []int{}
-	line = strings.ToLower(line)
-	for count, char := range line {
+	var numberList []int
+	for count, char := range strings.ToLower(line) {
 		if unicode.IsDigit(char) {
 			number, _ := strconv.Atoi(string(char))
 			numberList = append(numberList, number)

@@ -43,6 +43,7 @@ func (d day) Solve(input string) string {
 
 func main() {
 	var day int
+	var example bool
 	app := &cli.App{
 		Name:  "Advent of Code",
 		Usage: "Solve the puzzle for the given day",
@@ -54,9 +55,16 @@ func main() {
 				Value:       1,
 				Destination: &day,
 			},
+			&cli.BoolFlag{
+				Name:        "example",
+				Usage:       "Use example input",
+				Aliases:     []string{"e"},
+				Value:       false,
+				Destination: &example,
+			},
 		},
 		Action: func(_ *cli.Context) error {
-			runDay(day)
+			runDay(day, example)
 			return nil
 		},
 	}
@@ -67,7 +75,7 @@ func main() {
 	}
 }
 
-func runDay(day int) {
+func runDay(day int, example bool) {
 	start := time.Now()
 
 	if day > len(days) {
@@ -75,7 +83,12 @@ func runDay(day int) {
 		return
 	}
 
-	result := days[day].Solve(days[day].input)
+	var result string
+	if example {
+		result = days[day].Solve(days[day].exampleInput)
+	} else {
+		result = days[day].Solve(days[day].input)
+	}
 	color.Print(result)
 	elapsed := time.Since(start)
 	fmt.Printf("Program took %s\n", elapsed)
