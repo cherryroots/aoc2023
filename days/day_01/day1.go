@@ -11,12 +11,12 @@ var numberMap = map[string]int{
 	"five": 5, "six": 6, "seven": 7, "eight": 8, "nine": 9,
 }
 
-func Calibrate(s string) string {
+func SolvePart1(s string) string {
 	lines := strings.Split(s, "\n")
 	c := make(chan int, len(lines))
 	go func() {
 		for _, line := range lines {
-			go correctElfMistake(line, c)
+			go correctP1(line, c)
 		}
 	}()
 
@@ -28,7 +28,41 @@ func Calibrate(s string) string {
 	return strconv.Itoa(sum)
 }
 
-func correctElfMistake(line string, c chan int) {
+func SolvePart2(s string) string {
+	lines := strings.Split(s, "\n")
+	c := make(chan int, len(lines))
+	go func() {
+		for _, line := range lines {
+			go correctP2(line, c)
+		}
+	}()
+
+	sum := 0
+	for range lines {
+		sum += <-c
+	}
+
+	return strconv.Itoa(sum)
+}
+
+func correctP1(line string, c chan int) {
+	var numberList []int
+	for _, char := range strings.ToLower(line) {
+		if unicode.IsDigit(char) {
+			number, _ := strconv.Atoi(string(char))
+			numberList = append(numberList, number)
+		}
+	}
+
+	first := strconv.Itoa(numberList[0])
+	last := strconv.Itoa(numberList[len(numberList)-1])
+	combined := first + last
+	number, _ := strconv.Atoi(combined)
+
+	c <- number
+}
+
+func correctP2(line string, c chan int) {
 	var numberList []int
 	for count, char := range strings.ToLower(line) {
 		if unicode.IsDigit(char) {

@@ -27,7 +27,7 @@ type day struct {
 }
 
 var days = map[int]day{
-	1: {day1.Input, day1.ExampleInput, day1.Calibrate, day1.Calibrate},
+	1: {day1.Input, day1.ExampleInput, day1.SolvePart1, day1.SolvePart2},
 	2: {day2.Input, day2.ExampleInput, day2.SolvePart1, day2.SolvePart2},
 	3: {day3.Input, day3.ExampleInput, day3.SolvePart1, day3.SolvePart2},
 	4: {day4.Input, day4.ExampleInput, day4.SolvePart1, day4.SolvePart2},
